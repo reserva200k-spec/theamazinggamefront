@@ -29,7 +29,7 @@ const serverUrl = window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://theamazinggame.onrender.com';
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
   // Wait for Chess.js to load
   const checkChess = setInterval(function() {
     if (typeof Chess !== 'undefined') {
@@ -48,8 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
   }, 5000);
 });
 
-function initializeGame() {
-  const moddUsername = getModdIOUsername();
+async function initializeGame() {
+  const moddUsername = await getModdIOUsername();
   console.log('Detected username:', moddUsername);
 
   const usernameInput = document.getElementById('username-input');
@@ -66,8 +66,46 @@ function initializeGame() {
   }, 1000);
 }
 
-function getModdIOUsername() {
-  // Check iframe element ID for user info (new approach for modd.io)
+async function getModdIOUsername() {
+  // Try to get username from modd.io token
+  try {
+    // Check for modd_guest_token in localStorage or cookies
+    const token = localStorage.getItem('modd_guest_token') || getCookie('modd_guest_token');
+    
+    if (token) {
+      // Decode JWT token
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const guestUserId = payload.guestUserId;
+      
+      // Fetch user info from modd.io API
+      const response = await fetch('https://www.modd.io/api/v1/user/', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData.status === 'success' && userData.data) {
+          const userId = userData.data._id;
+          const username = userData.data.local.username;
+          
+          // Check if user is admin (lurbs)
+          if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
+            isAdmin = true;
+          } else {
+            isAdmin = false;
+          }
+          
+          return username;
+        }
+      }
+    }
+  } catch (e) {
+    console.log('Token auth failed, trying fallback methods');
+  }
+  
+  // Fallback to iframe element ID for user info (new approach for modd.io)
   try {
     if (window.frameElement && window.frameElement.id) {
       const frameId = window.frameElement.id;
@@ -125,6 +163,13 @@ function getModdIOUsername() {
   // Guest user fallback
   isAdmin = false;
   return 'guest-' + Math.floor(Math.random() * 9900 + 100);
+}
+
+// Helper function to get cookie value
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
 function connectSocket() {
@@ -278,6 +323,7 @@ function login(customUsername) {
 function handleLoginSuccess(data) {
   username = data.username;
   playerRating = data.rating;
+  isAdmin = data.isAdmin;
 
   document.getElementById('user-name').textContent = data.username;
   document.getElementById('user-rating').textContent = data.rating;
@@ -411,7 +457,7 @@ function showView(viewName) {
   if (gameActive && viewName !== 'game') {
     if (confirm('You are in the middle of a game. Are you sure you want to leave?')) {
       if (confirm('Would you like to resign the current game?')) {
-        socket.emit('resign');
+        resign();
       }
       gameActive = false;
     } else {
@@ -438,8 +484,32 @@ function showView(viewName) {
     document.getElementById('profile-view').style.display = 'block';
     loadProfile();
   } else if (viewName === 'admin') {
-    if (adminView) adminView.style.display = 'block';
-    loadAdminPanel();
+    if (adminView) {
+      adminView.style.display = 'block';
+      loadAdminPanel();
+    }
+  }
+  
+  // Update active nav button
+  var navButtons = document.querySelectorAll('.nav-btn');
+  for (var i = 0; i < navButtons.length; i++) {
+    navButtons[i].classList.remove('active');
+  }
+  
+  // Find and activate the correct button
+  var activeButton = null;
+  if (viewName === 'home') {
+    activeButton = document.querySelector('.nav-btn:nth-child(1)');
+  } else if (viewName === 'leaderboard') {
+    activeButton = document.querySelector('.nav-btn:nth-child(2)');
+  } else if (viewName === 'profile') {
+    activeButton = document.querySelector('.nav-btn:nth-child(3)');
+  } else if (viewName === 'admin') {
+    activeButton = document.getElementById('admin-nav-btn');
+  }
+  
+  if (activeButton) {
+    activeButton.classList.add('active');
   }
 }
 
@@ -883,18 +953,32 @@ function updateChatDisplay() {
 }
 
 function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  
   var div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
 function offerDraw() {
-  socket.emit('offerDraw');
+  if (socket && socket.connected) {
+    socket.emit('offerDraw');
+    console.log('Draw offer sent to server');
+  } else {
+    console.log('Socket not connected, cannot offer draw');
+    alert('Connection lost. Cannot offer draw.');
+  }
 }
 
 function resign() {
   if (confirm('Are you sure you want to resign?')) {
-    socket.emit('resign');
+    if (socket && socket.connected) {
+      socket.emit('resign');
+      console.log('Resignation sent to server');
+    } else {
+      console.log('Socket not connected, cannot resign');
+      alert('Connection lost. Cannot resign.');
+    }
   }
 }
 
@@ -904,22 +988,41 @@ function newGame() {
 }
 
 function showAdminPanel() {
+  // Show the admin nav button
+  var adminNavBtn = document.getElementById('admin-nav-btn');
+  if (adminNavBtn) {
+    adminNavBtn.style.display = 'block';
+  }
+  
+  // Create admin view if it doesn't exist
   var adminView = document.getElementById('admin-view');
   if (!adminView) {
     adminView = document.createElement('div');
     adminView.id = 'admin-view';
     adminView.style.display = 'none';
-    adminView.innerHTML = '<div class="card"><h2>Admin Panel</h2><div id="admin-player-list"></div></div>';
+    adminView.innerHTML = `
+      <div class="card">
+        <h2 class="card-title">🛡️ Admin Panel</h2>
+        <div class="admin-section">
+          <h3>Player Management</h3>
+          <div id="admin-player-list">
+            <p>Loading players...</p>
+          </div>
+        </div>
+        <div class="admin-section" style="margin-top: 2rem;">
+          <h3>Actions</h3>
+          <div class="admin-actions">
+            <input type="text" id="admin-target-input" placeholder="Enter username" style="width: 200px; padding: 0.5rem; margin-right: 0.5rem;">
+            <button class="control-btn" onclick="adminAction('kick')">Kick</button>
+            <button class="control-btn" onclick="adminAction('ban')">Ban</button>
+            <button class="control-btn" onclick="adminAction('unban')">Unban</button>
+            <button class="control-btn" onclick="adminAction('mute')">Mute</button>
+            <button class="control-btn" onclick="adminAction('unmute')">Unmute</button>
+          </div>
+        </div>
+      </div>
+    `;
     document.querySelector('.main-content').appendChild(adminView);
-
-    var nav = document.querySelector('.nav');
-    if (nav) {
-      var btn = document.createElement('button');
-      btn.className = 'nav-btn';
-      btn.textContent = 'Admin';
-      btn.onclick = function () { showView('admin'); };
-      nav.appendChild(btn);
-    }
   }
 
   socket.emit('getPlayerList');
@@ -933,12 +1036,33 @@ function updatePlayerList(players) {
   var container = document.getElementById('admin-player-list');
   if (!container) return;
 
-  var html = '<table class="leaderboard-table"><thead><tr><th>User</th><th>Rating</th><th>Status</th></tr></thead><tbody>';
+  if (players.length === 0) {
+    container.innerHTML = '<p>No players online</p>';
+    return;
+  }
+
+  var html = '<div class="player-list">';
+  html += '<table class="leaderboard-table" style="width: 100%;">';
+  html += '<thead><tr><th>User</th><th>Rating</th><th>Games</th><th>Status</th></tr></thead>';
+  html += '<tbody>';
+  
   for (var i = 0; i < players.length; i++) {
     var p = players[i];
-    html += '<tr><td>' + p.username + '</td><td>' + p.rating + '</td><td>' + (p.isBanned ? 'Banned' : p.isMuted ? 'Muted' : 'Active') + '</td></tr>';
+    var status = 'Active';
+    if (p.isBanned) status = 'Banned';
+    else if (p.isMuted) status = 'Muted';
+    
+    html += '<tr>';
+    html += '<td>' + escapeHtml(p.username) + (p.isGuest ? ' (Guest)' : '') + '</td>';
+    html += '<td>' + p.rating + '</td>';
+    html += '<td>' + (p.gamesPlayed || 0) + '</td>';
+    html += '<td>' + status + '</td>';
+    html += '</tr>';
   }
+  
   html += '</tbody></table>';
+  html += '</div>';
+  
   container.innerHTML = html;
 }
 
@@ -948,6 +1072,24 @@ function viewPlayerProfile(targetUsername) {
 
 function showPlayerProfile(data) {
   alert('Player: ' + data.username + '\nRating: ' + data.rating + '\nGames: ' + data.gamesPlayed);
+}
+
+function adminAction(action) {
+  const targetInput = document.getElementById('admin-target-input');
+  const target = targetInput.value.trim();
+  
+  if (!target) {
+    alert('Please enter a username');
+    return;
+  }
+  
+  if (socket && socket.connected) {
+    socket.emit('adminAction', { action, target });
+    console.log(`Admin action ${action} sent for user ${target}`);
+  } else {
+    console.log('Socket not connected, cannot perform admin action');
+    alert('Connection lost. Cannot perform admin action.');
+  }
 }
 
 function displayAnalysis(analysis) {

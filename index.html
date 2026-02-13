@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Modd Chess - Multiplayer Chess with Rankings</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
@@ -15,8 +15,8 @@
     }
     
     body {
-      font-family: 'Lora', serif;
-      background: #f0f0f0;
+      font-family: 'Inter', sans-serif;
+      background: #f5f5f5;
       min-height: 100vh;
       color: #333;
       overflow-x: hidden;
@@ -29,7 +29,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f0f0f0;
+      background: #f5f5f5;
       z-index: 1000;
     }
     
@@ -94,65 +94,6 @@
       background: #2980b9;
     }
     
-    .login-container {
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
-    }
-    
-    .login-logo {
-      font-size: 3.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .login-subtitle {
-      color: #888;
-      margin-bottom: 3rem;
-      font-size: 1.1rem;
-    }
-    
-    .login-input {
-      width: 100%;
-      padding: 1rem 1.5rem;
-      font-size: 1.1rem;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      color: #fff;
-      text-align: center;
-      outline: none;
-      transition: all 0.3s;
-      margin-bottom: 1.5rem;
-    }
-    
-    .login-input:focus {
-      border-color: #00d4ff;
-      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
-    }
-    
-    .login-btn {
-      width: 100%;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    
-    .login-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
-    }
-    
     /* Main App */
     #app {
       display: none;
@@ -161,21 +102,19 @@
     
     /* Header */
     .header {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: #2c3e50;
+      color: white;
       padding: 1rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .header-logo {
       font-size: 1.5rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: white;
     }
     
     .header-user {
@@ -196,18 +135,19 @@
       display: flex;
       gap: 0.5rem;
       padding: 1rem 2rem;
-      background: #ffffff;
-      border-bottom: 1px solid #eee;
+      background: #34495e;
+      border-bottom: 1px solid #2c3e50;
     }
     
     .nav-btn {
-      padding: 0.5rem 1rem;
-      background: #f8f8f8;
-      border: 1px solid #ddd;
+      padding: 0.75rem 1.5rem;
+      background: #2c3e50;
+      border: 1px solid #34495e;
       border-radius: 4px;
-      color: #333;
+      color: #ecf0f1;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
+      font-size: 0.9rem;
       font-weight: 500;
     }
     
@@ -215,22 +155,6 @@
       background: #3498db;
       border-color: #3498db;
       color: #fff;
-    }
-    
-    .nav-btn {
-      padding: 0.75rem 1.5rem;
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.9rem;
-    }
-    
-    .nav-btn:hover, .nav-btn.active {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: #00d4ff;
     }
     
     /* Main Content */
@@ -259,23 +183,15 @@
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 1.5rem;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       margin-bottom: 1rem;
-    }
-    
-    .card-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      color: #2c3e50;
-      text-align: center;
-      font-family: 'Merriweather', serif;
     }
     
     .card-title {
       font-size: 1.3rem;
       font-weight: 600;
       margin-bottom: 1.5rem;
+      color: #2c3e50;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -289,7 +205,7 @@
       border-radius: 4px;
       color: #333;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
       text-align: left;
       display: flex;
       justify-content: space-between;
@@ -302,28 +218,7 @@
       transform: translateY(-1px);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       border-color: #3498db;
-    }
-    
-    .play-btn .btn-title {
-      font-weight: 600;
-      font-size: 1rem;
-    }
-    
-    .play-btn .btn-subtitle {
-      font-size: 0.8rem;
-      color: #666;
-      margin-top: 0.2rem;
-    }
-    
-    .play-btn .btn-icon {
-      font-size: 1.2rem;
-      color: #3498db;
-    }
-    
-    .play-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
-      border-color: #00d4ff;
+      background: #f8f9fa;
     }
     
     .play-btn .btn-title {
@@ -333,12 +228,13 @@
     
     .play-btn .btn-subtitle {
       font-size: 0.85rem;
-      color: #888;
+      color: #666;
       margin-top: 0.25rem;
     }
     
     .play-btn .btn-icon {
       font-size: 1.5rem;
+      color: #3498db;
     }
     
     /* Bot difficulty selection */
@@ -486,12 +382,13 @@
     }
     
     .chess-piece {
-      text-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.4);
-      filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+      text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+      filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.3));
+      font-weight: bold;
     }
     
     .square.dark .chess-piece {
-      text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 0.6);
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
     }
     
     .square .coord {
@@ -518,19 +415,26 @@
     }
     
     .player-bar {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       padding: 1rem;
       margin-bottom: 1rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .player-bar.active {
-      background: rgba(0, 212, 255, 0.1);
-      border-color: rgba(0, 212, 255, 0.3);
+      background: #3498db;
+      color: white;
+      border-color: #2980b9;
+    }
+    
+    .player-bar.active .player-rating,
+    .player-bar.active .player-time {
+      color: rgba(255, 255, 255, 0.9);
     }
     
     .player-info {
@@ -741,6 +645,42 @@
       opacity: 0.9;
     }
 
+    /* Admin Panel */
+    .admin-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .admin-section h3 {
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+    
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .admin-actions input {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .admin-actions .control-btn {
+      padding: 0.5rem 1rem;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .admin-actions .control-btn:hover {
+      background: #e9ecef;
+    }
+    
     /* Queue Overlay */
     #queue-overlay {
       display: none;
@@ -916,15 +856,40 @@
       color: #00d4ff;
     }
     
-    /* Promotion Modal */
-    #promotion-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      z-index: 300;
+    /* Admin Panel */
+    .admin-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .admin-section h3 {
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+    
+    .admin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       align-items: center;
-      justify-content: center;
+    }
+    
+    .admin-actions input {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .admin-actions .control-btn {
+      padding: 0.5rem 1rem;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .admin-actions .control-btn:hover {
+      background: #e9ecef;
     }
     
     .promotion-options {
@@ -1052,6 +1017,17 @@
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
       }
+      
+      .admin-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .admin-actions input {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+      }
     }
     
     @media (max-width: 400px) {
@@ -1098,7 +1074,7 @@
   <!-- Main App -->
   <div id="app">
     <header class="header">
-      <div class="header-logo">♔ NEON CHESS</div>
+      <div class="header-logo">♔ MODD CHESS</div>
       <div class="header-user">
         <span class="user-rating" id="user-rating">1200</span>
         <span id="user-name">Player</span>
@@ -1109,6 +1085,7 @@
       <button class="nav-btn active" onclick="showView('home')">Play</button>
       <button class="nav-btn" onclick="showView('leaderboard')">Leaderboard</button>
       <button class="nav-btn" onclick="showView('profile')">Profile</button>
+      <button class="nav-btn" id="admin-nav-btn" style="display: none;" onclick="showView('admin')">Admin</button>
     </nav>
     
     <div class="main-content">
@@ -1295,6 +1272,16 @@
           <h2 class="card-title">👤 Profile</h2>
           <div id="profile-content" style="padding: 2rem 0;">
             Loading...
+          </div>
+        </div>
+      </div>
+      
+      <!-- Admin View -->
+      <div id="admin-view" style="display: none;">
+        <div class="card" style="width: 100%;">
+          <h2 class="card-title">🛡️ Admin Panel</h2>
+          <div id="admin-content">
+            <p>Welcome to the admin panel. Please use the navigation menu to access admin features.</p>
           </div>
         </div>
       </div>
