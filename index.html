@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modd Chess - Multiplayer Chess with Rankings</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Lora', serif;
+      background: #f0f0f0;
+      min-height: 100vh;
+      color: #333;
+      overflow-x: hidden;
+    }
+    
+    /* Login Screen */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      z-index: 1000;
+    }
+    
+    .login-container {
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-logo {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+      text-align: center;
+      font-family: 'Merriweather', serif;
+    }
+    
+    .login-subtitle {
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+    
+    .login-input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      color: #333;
+      text-align: center;
+      outline: none;
+      transition: all 0.3s;
+      margin-bottom: 1rem;
+    }
+    
+    .login-input:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #3498db;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .login-btn:hover {
+      background: #2980b9;
+    }
+    
+    .login-container {
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    
+    .login-logo {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .login-subtitle {
+      color: #888;
+      margin-bottom: 3rem;
+      font-size: 1.1rem;
+    }
+    
+    .login-input {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 1.1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      text-align: center;
+      outline: none;
+      transition: all 0.3s;
+      margin-bottom: 1.5rem;
+    }
+    
+    .login-input:focus {
+      border-color: #00d4ff;
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+    }
+    
+    /* Main App */
+    #app {
+      display: none;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .user-rating {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    /* Navigation */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: #ffffff;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .nav-btn {
+      padding: 0.5rem 1rem;
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    
+    .nav-btn:hover, .nav-btn.active {
+      background: #3498db;
+      border-color: #3498db;
+      color: #fff;
+    }
+    
+    .nav-btn {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+    
+    .nav-btn:hover, .nav-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #00d4ff;
+    }
+    
+    /* Main Content */
+    .main-content {
+      display: flex;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* Home View */
+    #home-view {
+      flex: 1;
+    }
+    
+    .home-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+    }
+    
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+      text-align: center;
+      font-family: 'Merriweather', serif;
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .play-btn {
+      width: 100%;
+      padding: 1rem;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .play-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      border-color: #3498db;
+    }
+    
+    .play-btn .btn-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    
+    .play-btn .btn-subtitle {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.2rem;
+    }
+    
+    .play-btn .btn-icon {
+      font-size: 1.2rem;
+      color: #3498db;
+    }
+    
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+      border-color: #00d4ff;
+    }
+    
+    .play-btn .btn-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    
+    .play-btn .btn-subtitle {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+    
+    .play-btn .btn-icon {
+      font-size: 1.5rem;
+    }
+    
+    /* Bot difficulty selection */
+    .bot-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .bot-btn {
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    
+    .bot-btn:hover, .bot-btn.selected {
+      background: rgba(0, 212, 255, 0.2);
+      border-color: #00d4ff;
+    }
+    
+    .bot-btn .difficulty {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .bot-btn .rating {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+    
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+    
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+    
+    /* Game View */
+    #game-view {
+      display: none;
+      flex: 1;
+      gap: 2rem;
+    }
+    
+    .game-board-container {
+      flex: 0 0 auto;
+    }
+    
+    #chess-board {
+      width: 560px;
+      height: 560px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    
+    .board-row {
+      display: flex;
+    }
+    
+    .square {
+      width: 70px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      font-size: 50px;
+      user-select: none;
+    }
+    
+    .square.light {
+      background: #f0d9b5;
+    }
+    
+    .square.dark {
+      background: #b58863;
+    }
+    
+    .square:hover {
+      filter: brightness(1.1);
+    }
+    
+    .square.selected {
+      background: #baca44 !important;
+    }
+    
+    .square.last-move {
+      background: #f7ec5e !important;
+    }
+    
+    .square.valid-move::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 50%;
+    }
+    
+    .square.valid-capture::before {
+      content: '';
+      position: absolute;
+      width: 66px;
+      height: 66px;
+      border: 4px solid rgba(0, 0, 0, 0.3);
+      border-radius: 50%;
+    }
+    
+    .square .piece {
+      z-index: 1;
+      transition: transform 0.1s;
+    }
+    
+    .square .piece:hover {
+      transform: scale(1.1);
+    }
+    
+    .chess-piece {
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.4);
+      filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+    }
+    
+    .square.dark .chess-piece {
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.9), 0 0 10px rgba(255, 255, 255, 0.6);
+    }
+    
+    .square .coord {
+      position: absolute;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .square .coord.file {
+      bottom: 2px;
+      right: 4px;
+    }
+    
+    .square .coord.rank {
+      top: 2px;
+      left: 4px;
+    }
+    
+    /* Game Sidebar */
+    .game-sidebar {
+      flex: 1;
+      max-width: 350px;
+    }
+    
+    .player-bar {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .player-bar.active {
+      background: rgba(0, 212, 255, 0.1);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+    
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .player-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    
+    .player-name {
+      font-weight: 600;
+    }
+    
+    .player-rating {
+      font-size: 0.85rem;
+      color: #888;
+    }
+    
+    .player-time {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    
+    .player-time.low {
+      color: #ff4444;
+    }
+    
+    /* Move History */
+    .move-history {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1rem;
+      height: 300px;
+      overflow-y: auto;
+    }
+    
+    .move-history h3 {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    
+    .move-list {
+      display: grid;
+      grid-template-columns: 30px 1fr 1fr;
+      gap: 0.5rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    
+    .move-number {
+      color: #888;
+    }
+    
+    .move-white, .move-black {
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+    }
+    
+    .move-white:hover, .move-black:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .move-white.current, .move-black.current {
+      background: rgba(0, 212, 255, 0.3);
+    }
+    
+    /* Game Controls */
+    .game-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .control-btn {
+      flex: 1;
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+    
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .control-btn.danger {
+      background: rgba(255, 68, 68, 0.2);
+      border-color: rgba(255, 68, 68, 0.3);
+    }
+    
+    .control-btn.danger:hover {
+      background: rgba(255, 68, 68, 0.3);
+    }
+
+    /* Chat Styles */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 250px;
+    }
+
+    .chat-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .chat-tab {
+      flex: 1;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .chat-tab:hover, .chat-tab.active {
+      background: rgba(0, 212, 255, 0.2);
+      border-color: #00d4ff;
+      color: #fff;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .chat-message {
+      margin-bottom: 0.5rem;
+      word-break: break-word;
+    }
+
+    .chat-message.global {
+      color: #fbbf24;
+    }
+
+    .chat-message.match {
+      color: #fff;
+    }
+
+    .chat-username {
+      font-weight: 600;
+      color: #00d4ff;
+    }
+
+    .chat-text {
+      margin-left: 0.25rem;
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #chat-input {
+      flex: 1;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+
+    #chat-input:focus {
+      outline: none;
+      border-color: #00d4ff;
+    }
+
+    .chat-send-btn {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: opacity 0.2s;
+    }
+
+    .chat-send-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Queue Overlay */
+    #queue-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .queue-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 3rem;
+      text-align: center;
+      max-width: 400px;
+    }
+    
+    .queue-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 2rem;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .queue-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .queue-status {
+      color: #888;
+      margin-bottom: 2rem;
+    }
+    
+    .cancel-btn {
+      padding: 0.75rem 2rem;
+      background: rgba(255, 68, 68, 0.2);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .cancel-btn:hover {
+      background: rgba(255, 68, 68, 0.3);
+    }
+    
+    /* Game End Modal */
+    #game-end-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 3rem;
+      text-align: center;
+      max-width: 500px;
+    }
+    
+    .modal-result {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal-result.win {
+      color: #4ade80;
+    }
+    
+    .modal-result.loss {
+      color: #ff4444;
+    }
+    
+    .modal-result.draw {
+      color: #fbbf24;
+    }
+    
+    .modal-reason {
+      color: #888;
+      margin-bottom: 1.5rem;
+    }
+    
+    .rating-change {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    
+    .rating-change.positive {
+      color: #4ade80;
+    }
+    
+    .rating-change.negative {
+      color: #ff4444;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+    
+    .modal-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+    
+    .modal-btn.primary {
+      background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+      border: none;
+      color: #fff;
+    }
+    
+    .modal-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+    
+    /* Leaderboard */
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .leaderboard-table th,
+    .leaderboard-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .leaderboard-table th {
+      color: #888;
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    
+    .leaderboard-table tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .rank {
+      font-weight: 700;
+      color: #00d4ff;
+    }
+    
+    /* Promotion Modal */
+    #promotion-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .promotion-options {
+      display: flex;
+      gap: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 12px;
+    }
+    
+    .promotion-piece {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #eeeed2;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 50px;
+      transition: transform 0.2s;
+    }
+    
+    .promotion-piece:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .main-content {
+        flex-direction: column;
+      }
+      
+      #chess-board {
+        width: 400px;
+        height: 400px;
+      }
+      
+      .square {
+        width: 50px;
+        height: 50px;
+        font-size: 36px;
+      }
+      
+      .home-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      #chess-board {
+        width: 280px;
+        height: 280px;
+      }
+      
+      .square {
+        width: 35px;
+        height: 35px;
+        font-size: 24px;
+      }
+      
+      .game-sidebar {
+        max-width: 100%;
+        padding: 1rem;
+      }
+      
+      .game-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .control-btn {
+        width: 100%;
+      }
+      
+      .home-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #chess-board {
+        width: 240px;
+        height: 240px;
+      }
+      
+      .square {
+        width: 30px;
+        height: 30px;
+        font-size: 20px;
+      }
+      
+      .nav-btn {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+      }
+      
+      .chat-input-container {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      #chat-input {
+        width: 100%;
+      }
+      
+      .play-btn .btn-title {
+        font-size: 1rem;
+      }
+      
+      .play-btn .btn-subtitle {
+        font-size: 0.75rem;
+      }
+      
+      .bot-options {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+    }
+    
+    @media (max-width: 400px) {
+      #chess-board {
+        width: 200px;
+        height: 200px;
+      }
+      
+      .square {
+        width: 25px;
+        height: 25px;
+        font-size: 16px;
+      }
+      
+      .player-bar {
+        padding: 0.5rem;
+      }
+      
+      .player-name {
+        font-size: 0.9rem;
+      }
+      
+      .player-rating {
+        font-size: 0.8rem;
+      }
+      
+      .player-time {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="login-container">
+      <div class="login-logo">♔ MODD CHESS ♚</div>
+      <div class="login-subtitle">Master the Board. Rise in Rank.</div>
+      <input type="text" class="login-input" id="username-input" placeholder="Enter your username" maxlength="20">
+      <button class="login-btn" onclick="login()">Enter the Arena</button>
+    </div>
+  </div>
+  
+  <!-- Main App -->
+  <div id="app">
+    <header class="header">
+      <div class="header-logo">♔ NEON CHESS</div>
+      <div class="header-user">
+        <span class="user-rating" id="user-rating">1200</span>
+        <span id="user-name">Player</span>
+      </div>
+    </header>
+    
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showView('home')">Play</button>
+      <button class="nav-btn" onclick="showView('leaderboard')">Leaderboard</button>
+      <button class="nav-btn" onclick="showView('profile')">Profile</button>
+    </nav>
+    
+    <div class="main-content">
+      <!-- Home View -->
+      <div id="home-view">
+        <div class="home-grid">
+          <div class="card">
+            <h2 class="card-title">⚔️ Play Online</h2>
+            <button class="play-btn" onclick="joinQueue('ranked')">
+              <div>
+                <div class="btn-title">Ranked Match</div>
+                <div class="btn-subtitle">Compete for rating points</div>
+              </div>
+              <span class="btn-icon">🏆</span>
+            </button>
+            <button class="play-btn" onclick="joinQueue('casual')">
+              <div>
+                <div class="btn-title">Casual Match</div>
+                <div class="btn-subtitle">Practice without pressure</div>
+              </div>
+              <span class="btn-icon">🎮</span>
+            </button>
+          </div>
+          
+          <div class="card">
+            <h2 class="card-title">🤖 Play vs Bot</h2>
+            <div class="bot-options">
+              <button class="bot-btn" onclick="selectBot('beginner')">
+                <div class="difficulty">Beginner</div>
+                <div class="rating">~800</div>
+              </button>
+              <button class="bot-btn" onclick="selectBot('easy')">
+                <div class="difficulty">Easy</div>
+                <div class="rating">~1000</div>
+              </button>
+              <button class="bot-btn selected" onclick="selectBot('medium')">
+                <div class="difficulty">Medium</div>
+                <div class="rating">~1200</div>
+              </button>
+              <button class="bot-btn" onclick="selectBot('hard')">
+                <div class="difficulty">Hard</div>
+                <div class="rating">~1600</div>
+              </button>
+              <button class="bot-btn" onclick="selectBot('expert')">
+                <div class="difficulty">Expert</div>
+                <div class="rating">~2000</div>
+              </button>
+            </div>
+            <button class="play-btn" onclick="playBot()">
+              <div>
+                <div class="btn-title">Start Game</div>
+                <div class="btn-subtitle">Test your skills against AI</div>
+              </div>
+              <span class="btn-icon">🎯</span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2 class="card-title">📊 Your Statistics</h2>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="stat-games">0</div>
+              <div class="stat-label">Games</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-wins">0</div>
+              <div class="stat-label">Wins</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-winrate">0%</div>
+              <div class="stat-label">Win Rate</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-rating">1200</div>
+              <div class="stat-label">Rating</div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h2 class="card-title">💬 Global Chat</h2>
+            <div class="chat-container">
+              <div class="chat-messages" id="lobby-chat-messages" style="height: 200px;"></div>
+              <div class="chat-input-area">
+                <input type="text" id="lobby-chat-input" placeholder="Type a message..." maxlength="200" onkeypress="if(event.key==='Enter')sendLobbyChatMessage()">
+                <button class="chat-send-btn" onclick="sendLobbyChatMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Game View -->
+      <div id="game-view">
+        <div class="game-board-container">
+          <!-- Top Player -->
+          <div class="player-bar" id="player-top">
+            <div class="player-info">
+              <div class="player-avatar">B</div>
+              <div>
+                <div class="player-name" id="opponent-name">Opponent</div>
+                <div class="player-rating" id="opponent-rating">1200</div>
+              </div>
+            </div>
+            <div class="player-time" id="opponent-time">10:00</div>
+          </div>
+          
+          <div id="chess-board"></div>
+          
+          <!-- Bottom Player -->
+          <div class="player-bar active" id="player-bottom">
+            <div class="player-info">
+              <div class="player-avatar">W</div>
+              <div>
+                <div class="player-name" id="player-name">You</div>
+                <div class="player-rating" id="player-rating-display">1200</div>
+              </div>
+            </div>
+            <div class="player-time" id="player-time">10:00</div>
+          </div>
+        </div>
+        
+    <div class="game-sidebar">
+      <div class="card">
+        <h3>Move History</h3>
+        <div class="move-history" id="move-history">
+          <div class="move-list" id="move-list"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1rem;">
+        <h3>Chat</h3>
+        <div class="chat-container">
+          <div class="chat-tabs">
+            <button class="chat-tab active" onclick="switchChat('match')">Match</button>
+            <button class="chat-tab" onclick="switchChat('global')">Global</button>
+          </div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." maxlength="200" onkeypress="if(event.key==='Enter')sendChatMessage()">
+            <button class="chat-send-btn" onclick="sendChatMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button class="control-btn" onclick="offerDraw()">🤝 Draw</button>
+        <button class="control-btn danger" onclick="resign()">🏳️ Resign</button>
+      </div>
+
+      <div class="card" style="margin-top: 1rem;">
+        <h3>Analysis</h3>
+        <div id="game-analysis" style="color: #888; text-align: center; padding: 2rem 0;">
+          Game analysis will appear after the game ends
+        </div>
+      </div>
+    </div>
+      </div>
+      
+      <!-- Leaderboard View -->
+      <div id="leaderboard-view" style="display: none;">
+        <div class="card" style="width: 100%;">
+          <h2 class="card-title">🏆 Global Leaderboard</h2>
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Rating</th>
+                <th>Wins</th>
+                <th>Games</th>
+                <th>Win Rate</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Profile View -->
+      <div id="profile-view" style="display: none;">
+        <div class="card" style="width: 100%;">
+          <h2 class="card-title">👤 Profile</h2>
+          <div id="profile-content" style="padding: 2rem 0;">
+            Loading...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Queue Overlay -->
+  <div id="queue-overlay">
+    <div class="queue-card">
+      <div class="queue-spinner"></div>
+      <div class="queue-title">Finding Match...</div>
+      <div class="queue-status">Estimated wait: &lt; 30 seconds</div>
+      <button class="cancel-btn" onclick="leaveQueue()">Cancel</button>
+    </div>
+  </div>
+  
+  <!-- Game End Modal -->
+  <div id="game-end-modal">
+    <div class="modal-content">
+      <div class="modal-result" id="modal-result">Victory!</div>
+      <div class="modal-reason" id="modal-reason">by checkmate</div>
+      <div class="rating-change" id="rating-change">
+        <span>+24</span>
+        <span>→</span>
+        <span>1224</span>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn primary" onclick="newGame()">New Game</button>
+        <button class="modal-btn secondary" onclick="analyzeGame()">Analyze</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Promotion Modal -->
+  <div id="promotion-modal">
+    <div class="promotion-options">
+      <div class="promotion-piece" onclick="promote('q')">♕</div>
+      <div class="promotion-piece" onclick="promote('r')">♖</div>
+      <div class="promotion-piece" onclick="promote('b')">♗</div>
+      <div class="promotion-piece" onclick="promote('n')">♘</div>
+    </div>
+  </div>
+  
+  <script src="js/chess/game.js"></script>
+</body>
+</html>
