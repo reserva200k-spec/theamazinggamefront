@@ -50,26 +50,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 localStorage
 async function initializeGame() {
   let moddUsername = await getModdIOUsername();
-  console.log('Modd.io username:', moddUsername);
-  console.log('Is user window:', window.username);
-  console.log('Is user self:', self.username);
-  console.log('Is user this:', this.username);
-  console.log('Is user global:', globalThis.username);
-  
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
-  let username = urlParams.get('user');
-
-  if (username) {
-    console.log('Username received from URL:', username);
-    moddUsername = username;
-  } else {
-    console.log('No username found in the URL.');
-  }
-
-
-
   const usernameInput = document.getElementById('username-input');
+
   if (usernameInput && moddUsername) {
     usernameInput.value = moddUsername;
   }
@@ -136,69 +118,39 @@ async function getModdIOUsername() {
     // Silently fail
   }
 
-  // Try to get username from modd.io token
+
   try {
-    // Check for modd_guest_token in localStorage or cookies
-    const token = localStorage.getItem('modd_guest_token') || getCookie('modd_guest_token');
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let username = urlParams.get('user');
+    let uid;
 
-    if (token) {
-      // Decode JWT token
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const guestUserId = payload.guestUserId;
-
-      // Fetch user info from modd.io API
-      const response = await fetch('https://www.modd.io/api/v1/user/', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        if (userData.status === 'success' && userData.data) {
-          const userId = userData.data._id;
-          const username = userData.data.local.username;
-
-          // Check if user is admin (lurbs)
-          if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
-            isAdmin = true;
+    if (username) {
+      console.log('>:)', username);
+      fetch(`https://api.modd.io/v1/user-by-name/${username}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data) {
+            console.log('heheheha:', data);
+            uid = data._id;
+            if (data.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe') {
+              isAdmin = true;
+            } else {
+              isAdmin = false;
+            }
+            return data.local.username;
           } else {
-            isAdmin = false;
+            console.log('Not found :(2');
           }
-
-          return username;
-        }
-      }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    } else {
+      console.log('Not found :(');
     }
   } catch (e) {
-    // Silently fail
-  }
 
-  // Fallback to iframe element ID for user info (new approach for modd.io)
-  try {
-    if (window.frameElement && window.frameElement.id) {
-      const frameId = window.frameElement.id;
-      const parts = frameId.split('-');
-
-      // Check for conqframe-llkasz-username-pattern
-      if (parts.length >= 4 && parts[0] === 'conqframe' && parts[1] === 'llkasz') {
-        if (parts[2] === 'lurbs') {
-          isAdmin = true;
-          return 'lurbs';
-        } else {
-          isAdmin = false;
-          return parts[2]; // Return the username
-        }
-      }
-
-      // Check for conqframe-jkasz-username-pattern
-      if (parts.length >= 4 && parts[0] === 'conqframe' && parts[1] === 'jkasz') {
-        isAdmin = false;
-        return parts[2]; // Return the username
-      }
-    }
-  } catch (e) {
-    // Cross-origin restrictions - silently fail
   }
 
   // Check for llkasz- elements (admin/owner)
@@ -207,29 +159,25 @@ async function getModdIOUsername() {
     const id = adminElements[i].id;
     const parts = id.split('-');
     if (parts.length >= 3) {
-      // Check if the username after llkasz- is 'lurbs'
       if (parts[1] === 'lurbs') {
         isAdmin = true;
         return 'lurbs';
       }
-      // If it's llkasz- but not lurbs, just return the username
       isAdmin = false;
       return parts[1];
     }
   }
 
-  // Check for jkasz- elements (regular players)
   const playerElements = document.querySelectorAll('[id^="jkasz-"]');
   for (let i = 0; i < playerElements.length; i++) {
     const id = playerElements[i].id;
     const parts = id.split('-');
     if (parts.length >= 3) {
       isAdmin = false;
-      return parts[1]; // Return the username
+      return parts[1];
     }
   }
 
-  // Guest user fallback
   isAdmin = false;
   return 'guest-' + Math.floor(Math.random() * 9900 + 100);
 }
