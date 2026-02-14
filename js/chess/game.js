@@ -55,7 +55,7 @@ async function initializeGame() {
   console.log('Is user self:', self.username);
   console.log('Is user this:', this.username);
   console.log('Is user global:', globalThis.username);
-  console.log('Is user parent:', window.parent.username);
+  
   let queryString = window.location.search;
   let urlParams = new URLSearchParams(queryString);
   let username = urlParams.get('user');
