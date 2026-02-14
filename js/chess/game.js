@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 localStorage
 async function initializeGame() {
   const moddUsername = await getModdIOUsername();
-  console.log('Detected username:', moddUsername);
 
   const usernameInput = document.getElementById('username-input');
   if (usernameInput && moddUsername) {
@@ -67,11 +66,38 @@ async function initializeGame() {
 }
 
 async function getModdIOUsername() {
-  // Try to get username from localStorage.userData first
+  // Try to get username from window.parent if in iframe
+  try {
+    if (window.parent && window.parent !== window) {
+      // Try to access localStorage from parent window
+      const parentLocalStorage = window.parent.localStorage;
+      if (parentLocalStorage) {
+        const userDataStr = parentLocalStorage.getItem('userData');
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          if (userData && userData.local && userData.local.username) {
+            const username = userData.local.username;
+            const userId = userData._id;
+            
+            // Check if user is admin (lurbs)
+            if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
+              isAdmin = true;
+            } else {
+              isAdmin = false;
+            }
+            
+            return username;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Cross-origin restrictions - silently fail
+  }
+  
+  // Try to get username from current window localStorage
   try {
     const userDataStr = localStorage.getItem('userData');
-    console.log('localStorage userData:', userDataStr);
-    console.log('Window.localStorage userData:', window.localStorage.getItem('userData'));
     if (userDataStr) {
       const userData = JSON.parse(userDataStr);
       if (userData && userData.local && userData.local.username) {
@@ -85,12 +111,11 @@ async function getModdIOUsername() {
           isAdmin = false;
         }
         
-        console.log('Authenticated user:', username, 'isAdmin:', isAdmin);
         return username;
       }
     }
   } catch (e) {
-    console.log('localStorage userData parsing failed:', e);
+    // Silently fail
   }
   
   // Try to get username from modd.io token
@@ -128,7 +153,7 @@ async function getModdIOUsername() {
       }
     }
   } catch (e) {
-    console.log('Token auth failed, trying fallback methods');
+    // Silently fail
   }
   
   // Fallback to iframe element ID for user info (new approach for modd.io)
@@ -911,6 +936,55 @@ function switchChat(tab) {
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].classList.remove('active');
   }
+  
+  // Activate the selected tab
+  var selectedTab = document.querySelector('.chat-tab[data-tab="' + tab + '"]');
+  if (selectedTab) {
+    selectedTab.classList.add('active');
+  }
+  
+  // Filter chat messages
+  filterChatMessages();
+}
+  
+  // Activate the selected tab
+  var selectedTab = document.querySelector('.chat-tab[data-tab="' + tab + '"]');
+  if (selectedTab) {
+    selectedTab.classList.add('active');
+  }
+  
+  // Filter chat messages
+  filterChatMessages();
+}
+
+function filterChatMessages() {
+  const messages = document.querySelectorAll('#chat-messages .chat-message');
+  messages.forEach(msg => {
+    const isGlobal = msg.classList.contains('global');
+    const isMatch = msg.classList.contains('match');
+    
+    if (currentChatTab === 'global' && isGlobal) {
+      msg.style.display = '';
+    } else if (currentChatTab === 'match' && isMatch) {
+      msg.style.display = '';
+    } else {
+      msg.style.display = 'none';
+    }
+  });
+}
+
+function addChatMessage(username, message, isGlobal) {
+  chatHistory.push({ username: username, message: message, isGlobal: isGlobal });
+  updateChatDisplay();
+  
+  // Also update lobby chat if it's a global message
+  if (isGlobal) {
+    addLobbyChatMessage(username, message);
+  }
+  
+  // Filter messages based on current tab
+  filterChatMessages();
+}
   if (event && event.target) {
     event.target.classList.add('active');
   }
@@ -1169,6 +1243,15 @@ function displayAnalysis(analysis) {
 }
 
 function loadLeaderboard() {
+  // Add event listener for search input
+  const searchInput = document.getElementById('player-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase().trim();
+      filterLeaderboard(searchTerm);
+    });
+  }
+  
   fetch(serverUrl + '/api/leaderboard')
     .then(function (res) { return res.json(); })
     .then(function (players) {
@@ -1178,7 +1261,71 @@ function loadLeaderboard() {
       var html = '';
       for (var i = 0; i < players.length && i < 50; i++) {
         var p = players[i];
-        html += '<tr><td>' + (i + 1) + '</td><td>' + p.username + '</td><td>' + p.rating + '</td><td>' + (p.wins || 0) + '</td><td>' + (p.gamesPlayed || 0) + '</td></tr>';
+        html += '<tr data-player-name="' + p.username.toLowerCase() + '"><td>' + (i + 1) + '</td><td>' + p.username + '</td><td>' + p.rating + '</td><td>' + (p.wins || 0) + '</td><td>' + (p.gamesPlayed || 0) + '</td><td>' + (p.winRate || 0) + '%</td></tr>';
+      }
+      tbody.innerHTML = html || '<tr><td colspan="6">No players</td></tr>';
+    })
+function loadLeaderboard() {
+  // Add event listener for search input
+  const searchInput = document.getElementById('player-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase().trim();
+      filterLeaderboard(searchTerm);
+    });
+  }
+  
+  fetch(serverUrl + '/api/leaderboard')
+    .then(function (res) { return res.json(); })
+    .then(function (players) {
+      var tbody = document.getElementById('leaderboard-body');
+      if (!tbody) return;
+
+      var html = '';
+      for (var i = 0; i < players.length && i < 50; i++) {
+        var p = players[i];
+        html += '<tr data-player-name="' + p.username.toLowerCase() + '"><td>' + (i + 1) + '</td><td>' + p.username + '</td><td>' + p.rating + '</td><td>' + (p.wins || 0) + '</td><td>' + (p.gamesPlayed || 0) + '</td><td>' + (p.winRate || 0) + '%</td></tr>';
+      }
+      tbody.innerHTML = html || '<tr><td colspan="6">No players</td></tr>';
+    })
+    .catch(function (err) {
+      console.error('Leaderboard error:', err);
+    });
+}
+  
+  fetch(serverUrl + '/api/leaderboard')
+    .then(function (res) { return res.json(); })
+    .then(function (players) {
+      var tbody = document.getElementById('leaderboard-body');
+      if (!tbody) return;
+
+      var html = '';
+      for (var i = 0; i < players.length && i < 50; i++) {
+        var p = players[i];
+        html += '<tr data-player-name="' + p.username.toLowerCase() + '"><td>' + (i + 1) + '</td><td>' + p.username + '</td><td>' + p.rating + '</td><td>' + (p.wins || 0) + '</td><td>' + (p.gamesPlayed || 0) + '</td><td>' + (p.winRate || 0) + '%</td></tr>';
+      }
+      tbody.innerHTML = html || '<tr><td colspan="6">No players</td></tr>';
+    })
+function loadLeaderboard() {
+  // Add event listener for search input
+  const searchInput = document.getElementById('player-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase().trim();
+      filterLeaderboard(searchTerm);
+    });
+  }
+  
+  fetch(serverUrl + '/api/leaderboard')
+    .then(function (res) { return res.json(); })
+    .then(function (players) {
+      var tbody = document.getElementById('leaderboard-body');
+      if (!tbody) return;
+
+      var html = '';
+      for (var i = 0; i < players.length && i < 50; i++) {
+        var p = players[i];
+        html += '<tr data-player-name="' + p.username.toLowerCase() + '"><td>' + (i + 1) + '</td><td>' + p.username + '</td><td>' + p.rating + '</td><td>' + (p.wins || 0) + '</td><td>' + (p.gamesPlayed || 0) + '</td><td>' + (p.winRate || 0) + '%</td></tr>';
       }
       tbody.innerHTML = html || '<tr><td colspan="6">No players</td></tr>';
     })
@@ -1187,25 +1334,371 @@ function loadLeaderboard() {
     });
 }
 
+function filterLeaderboard(searchTerm) {
+  const rows = document.querySelectorAll('#leaderboard-body tr');
+  rows.forEach(row => {
+    const playerName = row.getAttribute('data-player-name');
+    if (!searchTerm || playerName.includes(searchTerm)) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+}
+
 function loadProfile() {
-  const moddUsername = getModdIOUsername();
-  // Ensure moddUsername is a string before calling startsWith
-  if (typeof moddUsername === 'string' && moddUsername.startsWith('guest-')) {
+  // Get the current username
+  const currentUsername = username || 'Unknown';
+  
+  // Check if it's a guest user
+  if (typeof currentUsername === 'string' && currentUsername.startsWith('guest-')) {
     document.getElementById('profile-content').innerHTML = '<p style="text-align: center; color: #888;">Guest users don\'t have profiles.</p>';
     return;
   }
 
-  fetch(serverUrl + '/api/player/' + (typeof moddUsername === 'string' ? moddUsername : username))
-    .then(function (res) { return res.json(); })
+  fetch(serverUrl + '/api/player/' + encodeURIComponent(currentUsername))
+    .then(function (res) { 
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json(); 
+    })
     .then(function (player) {
       var container = document.getElementById('profile-content');
       if (!container) return;
 
-      container.innerHTML = '<div style="text-align: center;"><h2>' + player.username + '</h2><div style="font-size: 2rem; color: #00d4ff;">' + player.rating + '</div></div>';
+      if (player.error) {
+        container.innerHTML = '<p style="text-align: center; color: #888;">Profile not found.</p>';
+        return;
+      }
+
+      // Create profile HTML with game history
+      let gamesHtml = '';
+      if (player.recentGames && player.recentGames.length > 0) {
+        gamesHtml = `
+          <h3 style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">Recent Games</h3>
+          <div style="max-height: 300px; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">Opponent</th>
+                  <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">Result</th>
+                  <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">Rating Change</th>
+                  <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">Moves</th>
+                  <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border-color);">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        player.recentGames.forEach((game, index) => {
+          const resultClass = game.result === 'win' ? 'color: #27ae60;' : 
+                             game.result === 'loss' ? 'color: #e74c3c;' : 
+                             'color: #f39c12;';
+          
+          const ratingChange = game.ratingChange || 0;
+          const ratingChangeText = ratingChange > 0 ? `+${ratingChange}` : ratingChange.toString();
+          const ratingChangeClass = ratingChange > 0 ? 'color: #27ae60;' : 
+                                   ratingChange < 0 ? 'color: #e74c3c;' : 
+                                   'color: #f39c12;';
+          
+          gamesHtml += `
+            <tr>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">${escapeHtml(game.opponent)}</td>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); ${resultClass}">${game.result}</td>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); ${ratingChangeClass}">${ratingChangeText}</td>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">${game.moves || 0}</td>
+              <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                <button onclick="viewGameReplay('${game.gameId}')" style="padding: 0.25rem 0.5rem; background: var(--button-bg); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">View</button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        gamesHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        gamesHtml = '<p style="text-align: center; color: #888; margin-top: 2rem;">No games played yet.</p>';
+      }
+
+      container.innerHTML = `
+        <div style="text-align: center;">
+          <h2>${escapeHtml(player.username)}</h2>
+          <div style="font-size: 2rem; color: #3498db; margin: 1rem 0;">${player.rating}</div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem;">
+            <div style="background: var(--button-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="font-size: 1.5rem; font-weight: bold;">${player.stats.gamesPlayed || 0}</div>
+              <div style="color: #666; font-size: 0.9rem;">Games</div>
+            </div>
+            <div style="background: var(--button-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="font-size: 1.5rem; font-weight: bold;">${player.stats.wins || 0}</div>
+              <div style="color: #666; font-size: 0.9rem;">Wins</div>
+            </div>
+            <div style="background: var(--button-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+              <div style="font-size: 1.5rem; font-weight: bold;">${player.stats.winRate || 0}%</div>
+              <div style="color: #666; font-size: 0.9rem;">Win Rate</div>
+            </div>
+          </div>
+          ${gamesHtml}
+        </div>
+      `;
     })
     .catch(function (err) {
       console.error('Profile error:', err);
+      var container = document.getElementById('profile-content');
+      if (container) {
+        container.innerHTML = '<p style="text-align: center; color: #888;">Error loading profile.</p>';
+      }
     });
+}
+
+// View game replay
+function viewGameReplay(gameId) {
+  // Fetch game details
+  fetch(serverUrl + '/api/game/' + encodeURIComponent(gameId))
+    .then(function (res) { 
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json(); 
+    })
+    .then(function (game) {
+      if (game.error) {
+        alert('Error loading game: ' + game.error);
+        return;
+      }
+      
+      // Show replay modal
+      showReplayModal(game);
+    })
+    .catch(function (err) {
+      console.error('Game replay error:', err);
+      alert('Error loading game replay.');
+    });
+}
+
+// Show replay modal
+function showReplayModal(game) {
+  // Create or update replay modal
+  let modal = document.getElementById('replay-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'replay-modal';
+    modal.className = 'modal';
+    modal.style.cssText = `
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 400;
+      align-items: center;
+      justify-content: center;
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  // Create modal content
+  modal.innerHTML = `
+    <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; max-width: 90vw; max-height: 90vh; overflow: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Game Replay</h2>
+        <button onclick="closeReplayModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+      </div>
+      <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div>
+          <h3>Game Info</h3>
+          <p><strong>White:</strong> ${escapeHtml(game.white.username)} (${game.white.rating})</p>
+          <p><strong>Black:</strong> ${escapeHtml(game.black.username)} (${game.black.rating})</p>
+          <p><strong>Result:</strong> ${game.result} by ${game.resultReason}</p>
+          <p><strong>Date:</strong> ${new Date(game.startedAt).toLocaleDateString()}</p>
+        </div>
+        <div>
+          <h3>Board</h3>
+          <div id="replay-board" style="width: 400px; height: 400px; border: 1px solid var(--border-color); border-radius: 8px;"></div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+            <button id="replay-prev" onclick="replayPrevMove()" disabled style="padding: 0.5rem 1rem; background: var(--button-bg); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">Previous</button>
+            <button id="replay-next" onclick="replayNextMove()" style="padding: 0.5rem 1rem; background: var(--button-bg); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">Next</button>
+            <button onclick="replayReset()" style="padding: 0.5rem 1rem; background: var(--button-bg); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer;">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 1rem;">
+        <h3>Move List</h3>
+        <div id="replay-moves" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 0.5rem;"></div>
+      </div>
+    </div>
+  `;
+  
+  // Show modal
+  modal.style.display = 'flex';
+  
+  // Initialize replay
+  initializeReplay(game);
+}
+
+// Close replay modal
+function closeReplayModal() {
+  const modal = document.getElementById('replay-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Replay state
+let replayState = {
+  game: null,
+  chess: null,
+  currentPosition: 0
+};
+
+// Initialize replay
+function initializeReplay(game) {
+  replayState.game = game;
+  replayState.chess = new Chess(game.currentFen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  replayState.currentPosition = 0;
+  
+  // Render initial board
+  renderReplayBoard();
+  
+  // Render move list
+  renderReplayMoves();
+  
+  // Update button states
+  updateReplayButtons();
+}
+
+// Render replay board
+function renderReplayBoard() {
+  const boardElement = document.getElementById('replay-board');
+  if (!boardElement || !replayState.chess) return;
+  
+  // Get board position
+  const board = replayState.chess.board();
+  
+  let html = '';
+  for (let row = 0; row < 8; row++) {
+    html += '<div style="display: flex;">';
+    for (let col = 0; col < 8; col++) {
+      const square = board[row][col];
+      const isLight = (row + col) % 2 === 0;
+      const squareName = String.fromCharCode(97 + col) + (8 - row);
+      
+      const bgColor = isLight ? '#f0d9b5' : '#b58863';
+      
+      html += `<div style="width: 50px; height: 50px; background: ${bgColor}; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative;">`;
+      
+      if (square) {
+        const pieceChar = {
+          'w': { 'k': '♔', 'q': '♕', 'r': '♖', 'b': '♗', 'n': '♘', 'p': '♙' },
+          'b': { 'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟' }
+        }[square.color][square.type];
+        
+        html += `<span style="text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);">${pieceChar}</span>`;
+      }
+      
+      // Add coordinates
+      if (col === 0) {
+        html += `<span style="position: absolute; top: 2px; left: 2px; font-size: 10px; color: rgba(0,0,0,0.5);">${8 - row}</span>`;
+      }
+      if (row === 7) {
+        html += `<span style="position: absolute; bottom: 2px; right: 2px; font-size: 10px; color: rgba(0,0,0,0.5);">${String.fromCharCode(97 + col)}</span>`;
+      }
+      
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  
+  boardElement.innerHTML = html;
+}
+
+// Render replay moves
+function renderReplayMoves() {
+  const movesElement = document.getElementById('replay-moves');
+  if (!movesElement || !replayState.game || !replayState.game.moves) return;
+  
+  let html = '<div style="display: grid; grid-template-columns: 30px 1fr 1fr; gap: 0.5rem; font-family: monospace; font-size: 0.9rem;">';
+  
+  for (let i = 0; i < replayState.game.moves.length; i++) {
+    const move = replayState.game.moves[i];
+    const moveNumber = Math.floor(i / 2) + 1;
+    const isWhite = i % 2 === 0;
+    
+    if (isWhite) {
+      html += `<div style="color: #888;">${moveNumber}.</div>`;
+      html += `<div style="cursor: pointer; padding: 0.1rem; border-radius: 3px; ${i === replayState.currentPosition ? 'background: rgba(52, 152, 219, 0.3);' : ''}" onclick="goToMove(${i})">${escapeHtml(move.san)}</div>`;
+      html += '<div></div>'; // Empty cell for black move
+    } else {
+      // Find the previous white move element and add the black move to it
+      html = html.replace(/(<div><\/div>)$/, `<div style="cursor: pointer; padding: 0.1rem; border-radius: 3px; ${i === replayState.currentPosition ? 'background: rgba(52, 152, 219, 0.3);' : ''}" onclick="goToMove(${i})">${escapeHtml(move.san)}</div>`);
+    }
+  }
+  
+  html += '</div>';
+  movesElement.innerHTML = html;
+}
+
+// Go to specific move
+function goToMove(moveIndex) {
+  if (!replayState.game || !replayState.game.moves) return;
+  
+  // Reset to initial position
+  replayState.chess = new Chess(replayState.game.currentFen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  replayState.currentPosition = 0;
+  
+  // Apply moves up to the selected position
+  for (let i = 0; i <= moveIndex && i < replayState.game.moves.length; i++) {
+    try {
+      replayState.chess.move(replayState.game.moves[i]);
+      replayState.currentPosition = i;
+    } catch (e) {
+      console.error('Error applying move:', e);
+      break;
+    }
+  }
+  
+  // Update display
+  renderReplayBoard();
+  renderReplayMoves();
+  updateReplayButtons();
+}
+
+// Previous move
+function replayPrevMove() {
+  if (replayState.currentPosition > 0) {
+    goToMove(replayState.currentPosition - 1);
+  }
+}
+
+// Next move
+function replayNextMove() {
+  if (replayState.game && replayState.game.moves && replayState.currentPosition < replayState.game.moves.length - 1) {
+    goToMove(replayState.currentPosition + 1);
+  }
+}
+
+// Reset replay
+function replayReset() {
+  if (replayState.game) {
+    initializeReplay(replayState.game);
+  }
+}
+
+// Update replay buttons
+function updateReplayButtons() {
+  const prevButton = document.getElementById('replay-prev');
+  const nextButton = document.getElementById('replay-next');
+  
+  if (prevButton) {
+    prevButton.disabled = replayState.currentPosition <= 0;
+  }
+  
+  if (nextButton && replayState.game && replayState.game.moves) {
+    nextButton.disabled = replayState.currentPosition >= replayState.game.moves.length - 1;
+  }
 }
 
 // Periodic health check to keep server awake
@@ -1233,7 +1726,91 @@ function setupPeriodicHealthChecks() {
   setTimeout(startHealthChecks, 5000);
 }
 
-// Start health checks when the page loads
+// Dark mode toggle
+function initDarkModeToggle() {
+  const toggleButton = document.getElementById('theme-toggle');
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  
+  if (currentTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+  
+  toggleButton.addEventListener('click', function() {
+    document.body.classList.toggle('dark-mode');
+    
+    // Save preference to localStorage
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+  });
+
+// Check if running in iframe and adapt accordingly
+function checkIframeEnvironment() {
+  if (window.self !== window.top) {
+    // Running in iframe
+    console.log('Running in iframe environment');
+    
+    // Add iframe-specific styles
+    const style = document.createElement('style');
+    style.textContent = `
+      body {
+        overflow: hidden;
+      }
+      
+      #app {
+        height: 100vh;
+      }
+      
+      .main-content {
+        height: calc(100vh - 120px);
+      }
+      
+      #game-view {
+        height: 100%;
+      }
+      
+      .game-board-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      #chess-board {
+        flex: 1;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Adjust for modd.io specific elements
+    adjustForModdIo();
+  }
+}
+
+// Adjust for modd.io specific elements
+function adjustForModdIo() {
+  // Hide modd.io UI elements that might interfere
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList') {
+        // Look for modd.io specific elements to hide or adjust
+        const menuButton = document.querySelector('button[aria-label="Menu"]');
+        if (menuButton) {
+          // Ensure our game UI is above modd.io elements
+          const app = document.getElementById('app');
+          if (app) {
+            app.style.zIndex = '1000';
+            app.style.position = 'relative';
+          }
+        }
+      }
+    });
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+
+// Call when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
+  checkIframeEnvironment();
+  initDarkModeToggle();
   setupPeriodicHealthChecks();
 });

@@ -14,12 +14,110 @@
       box-sizing: border-box;
     }
     
+    :root {
+      --bg-color: #f0f0f0;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #dddddd;
+      --header-bg: #2c3e50;
+      --nav-bg: #34495e;
+      --button-bg: #f8f9fa;
+      --button-hover: #e9ecef;
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+    }
+    
+    .dark-mode {
+      --bg-color: #1a1a1a;
+      --card-bg: #2d2d2d;
+      --text-color: #ffffff;
+      --border-color: #444444;
+      --header-bg: #1a1a1a;
+      --nav-bg: #252525;
+      --button-bg: #3d3d3d;
+      --button-hover: #4d4d4d;
+      --primary-color: #3498db;
+      --secondary-color: #ffffff;
+    }
+    
     body {
       font-family: 'Inter', sans-serif;
-      background: #f0f0f0;
+      background: var(--bg-color);
       min-height: 100vh;
-      color: #333;
+      color: var(--text-color);
       overflow-x: hidden;
+    }
+    
+    /* Login Screen */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-color);
+      z-index: 1000;
+    }
+    
+    .login-container {
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-logo {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--secondary-color);
+      text-align: center;
+      font-family: 'Merriweather', serif;
+    }
+    
+    .login-subtitle {
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+    
+    .login-input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+      background: var(--button-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      text-align: center;
+      outline: none;
+      transition: all 0.3s;
+      margin-bottom: 1rem;
+    }
+    
+    .login-input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      background: var(--primary-color);
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .login-btn:hover {
+      background: #2980b9;
     }
     
     /* Login Screen */
@@ -94,10 +192,108 @@
       background: #2980b9;
     }
     
-    /* Main App */
+/* Main App */
     #app {
       display: none;
       min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      background: var(--header-bg);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .header-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .user-rating {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    /* Navigation */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem 2rem;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .nav-btn {
+      padding: 0.75rem 1.5rem;
+      background: var(--button-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: #fff;
+    }
+    
+    /* Main Content */
+    .main-content {
+      display: flex;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      background: var(--bg-color);
+    }
+    
+    /* Home View */
+    #home-view {
+      flex: 1;
+    }
+    
+    .home-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--secondary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
     /* Header */
@@ -896,9 +1092,10 @@
     .promotion-options {
       display: flex;
       gap: 1rem;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--card-bg);
       padding: 1rem;
       border-radius: 12px;
+      border: 1px solid var(--border-color);
     }
     
     .promotion-piece {
@@ -918,7 +1115,56 @@
       transform: scale(1.1);
     }
     
+    .dark-mode .promotion-piece {
+      background: #b58863;
+    }
+    
+    /* Promotion Modal */
+    #promotion-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    
 /* Responsive */
+    @media (max-width: 1200px) {
+      .main-content {
+        padding: 1rem;
+      }
+      
+      .home-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      #chess-board {
+        width: 500px;
+        height: 500px;
+      }
+      
+      .square {
+        width: 62.5px;
+        height: 62.5px;
+        font-size: 44px;
+      }
+    }
+    
+    /* Replay Modal */
+    #replay-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 400;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Responsive */
     @media (max-width: 1200px) {
       .main-content {
         padding: 1rem;
@@ -1284,15 +1530,20 @@
   
   <!-- Main App -->
   <div id="app">
-    <header class="header">
+<header class="header">
       <div class="header-logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
-        <path d="M19 22H5C3.89543 22 3 21.1046 3 20V4C3 2.89543 3.89543 2 5 2H19C20.1046 2 21 2.89543 21 4V20C21 21.1046 20.1046 22 19 22Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M8 16V8L12 12L16 8V16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      MODD CHESS
-    </div>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+          <path d="M19 22H5C3.89543 22 3 21.1046 3 20V4C3 2.89543 3.89543 2 5 2H19C20.1046 2 21 2.89543 21 4V20C21 21.1046 20.1046 22 19 22Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M8 16V8L12 12L16 8V16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        MODD CHESS
+      </div>
       <div class="header-user">
+        <button id="theme-toggle" style="background: none; border: none; color: white; cursor: pointer; margin-right: 1rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <span class="user-rating" id="user-rating">1200</span>
         <span id="user-name">Player</span>
       </div>
@@ -1467,8 +1718,8 @@
         </h3>
         <div class="chat-container">
           <div class="chat-tabs">
-            <button class="chat-tab active" onclick="switchChat('match')">Match</button>
-            <button class="chat-tab" onclick="switchChat('global')">Global</button>
+            <button class="chat-tab active" onclick="switchChat('match')" data-tab="match">Match</button>
+            <button class="chat-tab" onclick="switchChat('global')" data-tab="global">Global</button>
           </div>
           <div class="chat-messages" id="chat-messages"></div>
           <div class="chat-input-area">
@@ -1512,15 +1763,18 @@
     </div>
       </div>
       
-      <!-- Leaderboard View -->
+<!-- Leaderboard View -->
       <div id="leaderboard-view" style="display: none;">
         <div class="card" style="width: 100%;">
           <h2 class="card-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
-            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Global Leaderboard
-        </h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Global Leaderboard
+          </h2>
+          <div style="margin-bottom: 1rem;">
+            <input type="text" id="player-search" placeholder="Search for a player..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--button-bg); color: var(--text-color);">
+          </div>
           <table class="leaderboard-table">
             <thead>
               <tr>
