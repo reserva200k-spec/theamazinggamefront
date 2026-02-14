@@ -58,56 +58,197 @@ async function initializeGame() {
 
   connectSocket();
 
-  setTimeout(function () {
-    if (moddUsername) {
-      login(moddUsername);
+  // Wait for socket connection before attempting login
+  const waitForSocket = setInterval(function () {
+    if (socket && socket.connected) {
+      clearInterval(waitForSocket);
+      if (moddUsername) {
+        login(moddUsername);
+      }
     }
-  }, 1000);
+  }, 100);
+
+  // Timeout after 5 seconds
+  setTimeout(function () {
+    if (!socket || !socket.connected) {
+      clearInterval(waitForSocket);
+      console.error('Socket connection timeout');
+      if (moddUsername) {
+        // Try to login anyway
+        login(moddUsername);
+      }
+    }
+  }, 5000);
 }
 
 async function getModdIOUsername() {
+  // Try to get username from URL parameters first (for modd.io integration)
   const urlParams = new URLSearchParams(window.location.search);
-  const username = urlParams.get('user');
-
-  if (username) {
-    const targetUrl = `https://modd.io/api/v1/user-by-name/${username}`;
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
-
-    try {
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
-      const userData = await response.json();
-
-      if (userData && userData.local) { 
-        const uid = userData._id; 
-        isAdmin = (userData.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe');
-        console.log('User found:', userData.local.username, '| isAdmin:', isAdmin);
-        return userData.local.username; 
+  const usernameParam = urlParams.get('user');
+  
+  if (usernameParam) {
+    // Validate the username parameter
+    if (usernameParam.length > 0 && usernameParam.length <= 20) {
+      // Check if it's the admin user
+      if (usernameParam === 'lurbs') {
+        isAdmin = true;
+      } else {
+        isAdmin = false;
       }
-    } catch (error) { 
-      console.error('Proxy Error:', error); 
+      console.log('Authenticated from URL param:', usernameParam, 'isAdmin:', isAdmin);
+      return usernameParam;
     }
   }
-
+  
+  // Try to get username from localStorage.userData (for iframe integration)
+  try {
+    if (window.parent && window.parent !== window) {
+      // Try to access localStorage from parent window
+      const parentLocalStorage = window.parent.localStorage;
+      if (parentLocalStorage) {
+        const userDataStr = parentLocalStorage.getItem('userData');
+        if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
+          if (userData && userData.local && userData.local.username) {
+            const username = userData.local.username;
+            const userId = userData._id;
+            
+            // Check if user is admin (lurbs)
+            if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
+              isAdmin = true;
+            } else {
+              isAdmin = false;
+            }
+            
+            console.log('Authenticated user from parent localStorage:', username, 'isAdmin:', isAdmin);
+            return username;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Cross-origin restrictions - silently fail
+  }
+  
+  // Try current window localStorage
+  try {
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      if (userData && userData.local && userData.local.username) {
+        const username = userData.local.username;
+        const userId = userData._id;
+        
+        // Check if user is admin (lurbs)
+        if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
+          isAdmin = true;
+        } else {
+          isAdmin = false;
+        }
+        
+        console.log('Authenticated user from current localStorage:', username, 'isAdmin:', isAdmin);
+        return username;
+      }
+    }
+  } catch (e) {
+    // Silently fail
+  }
+  
+  // Try to get username from modd.io token
+  try {
+    // Check for modd_guest_token in localStorage or cookies
+    const token = localStorage.getItem('modd_guest_token') || getCookie('modd_guest_token');
+    
+    if (token) {
+      // Decode JWT token
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const guestUserId = payload.guestUserId;
+      
+      // Fetch user info from modd.io API
+      const response = await fetch('https://www.modd.io/api/v1/user/', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData.status === 'success' && userData.data) {
+          const userId = userData.data._id;
+          const username = userData.data.local.username;
+          
+          // Check if user is admin (lurbs)
+          if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
+            isAdmin = true;
+          } else {
+            isAdmin = false;
+          }
+          
+          console.log('Authenticated user from token:', username, 'isAdmin:', isAdmin);
+          return username;
+        }
+      }
+    }
+  } catch (e) {
+    // Silently fail
+  }
+  
+  // Fallback to iframe element ID for user info (new approach for modd.io)
+  try {
+    if (window.frameElement && window.frameElement.id) {
+      const frameId = window.frameElement.id;
+      const parts = frameId.split('-');
+      
+      // Check for conqframe-llkasz-username-pattern
+      if (parts.length >= 4 && parts[0] === 'conqframe' && parts[1] === 'llkasz') {
+        if (parts[2] === 'lurbs') {
+          isAdmin = true;
+          return 'lurbs';
+        } else {
+          isAdmin = false;
+          return parts[2]; // Return the username
+        }
+      }
+      
+      // Check for conqframe-jkasz-username-pattern
+      if (parts.length >= 4 && parts[0] === 'conqframe' && parts[1] === 'jkasz') {
+        isAdmin = false;
+        return parts[2]; // Return the username
+      }
+    }
+  } catch (e) {
+    // Cross-origin restrictions - silently fail
+  }
+  
+  // Check for llkasz- elements (admin/owner)
   const adminElements = document.querySelectorAll('[id^="llkasz-"]');
-  for (let el of adminElements) {
-    const parts = el.id.split('-');
+  for (let i = 0; i < adminElements.length; i++) {
+    const id = adminElements[i].id;
+    const parts = id.split('-');
     if (parts.length >= 3) {
-      isAdmin = (parts[1] === 'lurbs');
-      return parts[1];
-    }
-  }
-
-  const playerElements = document.querySelectorAll('[id^="jkasz-"]');
-  for (let el of playerElements) {
-    const parts = el.id.split('-');
-    if (parts.length >= 3) {
+      // Check if the username after llkasz- is 'lurbs'
+      if (parts[1] === 'lurbs') {
+        isAdmin = true;
+        return 'lurbs';
+      }
+      // If it's llkasz- but not lurbs, just return the username
       isAdmin = false;
       return parts[1];
     }
   }
-
+  
+  // Check for jkasz- elements (regular players)
+  const playerElements = document.querySelectorAll('[id^="jkasz-"]');
+  for (let i = 0; i < playerElements.length; i++) {
+    const id = playerElements[i].id;
+    const parts = id.split('-');
+    if (parts.length >= 3) {
+      isAdmin = false;
+      return parts[1]; // Return the username
+    }
+  }
+  
+  // Guest user fallback
   isAdmin = false;
   return 'guest-' + Math.floor(Math.random() * 9900 + 100);
 }
@@ -367,6 +508,8 @@ function handleGameEnd(data) {
   console.log('Handling game end:', data);
   gameActive = false;
   currentGameId = null;
+  selectedSquare = null;
+  chess = null;
 
   const modal = document.getElementById('game-end-modal');
   const resultEl = document.getElementById('modal-result');
@@ -396,11 +539,7 @@ function handleGameEnd(data) {
 
   modal.style.display = 'flex';
 
-  if (currentGameId) {
-    setTimeout(function () {
-      socket.emit('requestAnalysis', currentGameId);
-    }, 1000);
-  }
+  // Don't request analysis immediately, wait for user interaction
 }
 
 function updateEstimatedWait(data) {
@@ -1643,15 +1782,22 @@ function initDarkModeToggle() {
 
 function checkIframeEnvironment() {
   if (window.self !== window.top) {
-
+    // Running in iframe
+    console.log('Running in iframe environment');
+    
+    // Add iframe-specific styles
     const style = document.createElement('style');
     style.textContent = `
       body {
         overflow: hidden;
+        margin: 0;
+        padding: 0;
       }
       
       #app {
         height: 100vh;
+        position: relative;
+        z-index: 99999 !important;
       }
       
       .main-content {
@@ -1672,9 +1818,23 @@ function checkIframeEnvironment() {
       #chess-board {
         flex: 1;
       }
+      
+      /* Ensure our UI is above modd.io elements */
+      #app, .header, .nav, .main-content {
+        z-index: 99999 !important;
+      }
+      
+      /* Specifically target the problematic game editor container */
+      #game-editor-container {
+        z-index: 9999 !important;
+      }
+      
+      .game-editor-widget {
+        z-index: 9998 !important;
+      }
     `;
     document.head.appendChild(style);
-
+    
     // Adjust for modd.io specific elements
     adjustForModdIo();
   }
