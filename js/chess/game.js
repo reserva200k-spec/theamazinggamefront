@@ -127,7 +127,7 @@ async function getModdIOUsername() {
 
     if (username) {
       console.log('>:)', username);
-      fetch(`https://api.modd.io/v1/user-by-name/${username}`)
+      fetch(`https://modd.io/v1/user-by-name/${username}`)
         .then(response => response.json())
         .then(data => {
           if (data) {
@@ -1711,13 +1711,9 @@ function initDarkModeToggle() {
   });
 }
 
-// Check if running in iframe and adapt accordingly
 function checkIframeEnvironment() {
   if (window.self !== window.top) {
-    // Running in iframe
-    console.log('Running in iframe environment');
 
-    // Add iframe-specific styles
     const style = document.createElement('style');
     style.textContent = `
       body {
