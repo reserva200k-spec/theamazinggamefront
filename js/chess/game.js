@@ -71,14 +71,13 @@ async function getModdIOUsername() {
 
   if (username) {
     const targetUrl = `https://modd.io/api/v1/user-by-name/${username}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
 
     try {
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('Network response was not ok.');
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
-      const data = await response.json();
-      const userData = JSON.parse(data.contents);
+      const userData = await response.json();
 
       if (userData && userData.local) {
         const uid = userData._id;
