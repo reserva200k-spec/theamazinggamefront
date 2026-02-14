@@ -80,8 +80,6 @@ async function getModdIOUsername() {
       if (userData && userData.local) {
         console.log('heheheha:', userData);
         const uid = userData._id;
-
-        // Admin check
         if (userData.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe') {
           isAdmin = true;
         } else {
