@@ -66,39 +66,31 @@ async function initializeGame() {
 }
 
 async function getModdIOUsername() {
-  try {
-    let queryString = window.location.search;
-    let urlParams = new URLSearchParams(queryString);
-    let username = urlParams.get('user');
-    let uid;
+  const targetUrl = `https://modd.io/api/v1/user-by-name/${username}`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
-    if (username) {
-      console.log('>:)', username);
-      fetch(`https://modd.io/api/v1/user-by-name/${username}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data) {
-            console.log('heheheha:', data);
-            uid = data._id;
-            if (data.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe') {
-              isAdmin = true;
-            } else {
-              isAdmin = false;
-            }
-            return data.local.username;
-          } else {
-            console.log('Not found :(2');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
-    } else {
-      console.log('Not found :(');
-    }
-  } catch (e) {
+  fetch(proxyUrl)
+    .then(response => {
+      if (response.ok) return response.json();
+      throw new Error('Network response was not ok.');
+    })
+    .then(data => {
+      const userData = JSON.parse(data.contents);
 
-  }
+      if (userData && userData.local) {
+        console.log('heheheha:', userData);
+        const uid = userData._id;
+
+        // Admin check
+        if (userData.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe') {
+          isAdmin = true;
+        } else {
+          isAdmin = false;
+        }
+        console.log('Is Admin:', isAdmin);
+      }
+    })
+    .catch(error => console.error('Proxy Error:', error));
 
   // Check for llkasz- elements (admin/owner)
   const adminElements = document.querySelectorAll('[id^="llkasz-"]');
