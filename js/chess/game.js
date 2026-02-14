@@ -55,7 +55,9 @@ async function initializeGame() {
   console.log('Is user self:', self.username);
   console.log('Is user this:', this.username);
   console.log('Is user global:', globalThis.username);
+  console.log('Is user parent:', window.parent.username);
   
+
 
   const usernameInput = document.getElementById('username-input');
   if (usernameInput && moddUsername) {
