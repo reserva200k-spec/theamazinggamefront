@@ -49,14 +49,24 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 localStorage
 async function initializeGame() {
-  const moddUsername = await getModdIOUsername();
+  let moddUsername = await getModdIOUsername();
   console.log('Modd.io username:', moddUsername);
   console.log('Is user window:', window.username);
   console.log('Is user self:', self.username);
   console.log('Is user this:', this.username);
   console.log('Is user global:', globalThis.username);
   console.log('Is user parent:', window.parent.username);
-  
+  let queryString = window.location.search;
+  let urlParams = new URLSearchParams(queryString);
+  let username = urlParams.get('user');
+
+  if (username) {
+    console.log('Username received from URL:', username);
+    moddUsername = username;
+  } else {
+    console.log('No username found in the URL.');
+  }
+
 
 
   const usernameInput = document.getElementById('username-input');
