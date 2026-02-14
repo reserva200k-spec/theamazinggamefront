@@ -127,7 +127,7 @@ async function getModdIOUsername() {
 
     if (username) {
       console.log('>:)', username);
-      fetch(`https://modd.io/v1/user-by-name/${username}`)
+      fetch(`https://modd.io/api/v1/user-by-name/${username}`)
         .then(response => response.json())
         .then(data => {
           if (data) {
