@@ -66,51 +66,43 @@ async function initializeGame() {
 }
 
 async function getModdIOUsername() {
-  const targetUrl = `https://modd.io/api/v1/user-by-name/${username}`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+  const urlParams = new URLSearchParams(window.location.search);
+  const username = urlParams.get('user');
 
-  fetch(proxyUrl, {
-    mode: 'no-cors'
-  })
-    .then(response => {
-      if (response.ok) return response.json();
-      throw new Error('Network response was not ok.');
-    })
-    .then(data => {
+  if (username) {
+    const targetUrl = `https://modd.io/api/v1/user-by-name/${username}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+    try {
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error('Network response was not ok.');
+
+      const data = await response.json();
       const userData = JSON.parse(data.contents);
 
       if (userData && userData.local) {
-        console.log('heheheha:', userData);
         const uid = userData._id;
-        if (userData.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe') {
-          isAdmin = true;
-        } else {
-          isAdmin = false;
-        }
-        console.log('Is Admin:', isAdmin);
+        isAdmin = (userData.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe');
+        console.log('User found:', userData.local.username, '| isAdmin:', isAdmin);
+        return userData.local.username;
       }
-    })
-    .catch(error => console.error('Proxy Error:', error));
+    } catch (error) {
+      console.error('Proxy Error:', error);
+    }
+  }
 
-  // Check for llkasz- elements (admin/owner)
   const adminElements = document.querySelectorAll('[id^="llkasz-"]');
-  for (let i = 0; i < adminElements.length; i++) {
-    const id = adminElements[i].id;
-    const parts = id.split('-');
+  for (let el of adminElements) {
+    const parts = el.id.split('-');
     if (parts.length >= 3) {
-      if (parts[1] === 'lurbs') {
-        isAdmin = true;
-        return 'lurbs';
-      }
-      isAdmin = false;
+      isAdmin = (parts[1] === 'lurbs');
       return parts[1];
     }
   }
 
   const playerElements = document.querySelectorAll('[id^="jkasz-"]');
-  for (let i = 0; i < playerElements.length; i++) {
-    const id = playerElements[i].id;
-    const parts = id.split('-');
+  for (let el of playerElements) {
+    const parts = el.id.split('-');
     if (parts.length >= 3) {
       isAdmin = false;
       return parts[1];
