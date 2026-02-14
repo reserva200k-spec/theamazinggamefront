@@ -66,59 +66,6 @@ async function initializeGame() {
 }
 
 async function getModdIOUsername() {
-  // Try to get username from window.parent if in iframe
-  try {
-    if (window.parent && window.parent !== window) {
-      // Try to access localStorage from parent window
-      const parentLocalStorage = window.parent.localStorage;
-      if (parentLocalStorage) {
-        const userDataStr = parentLocalStorage.getItem('userData');
-        if (userDataStr) {
-          const userData = JSON.parse(userDataStr);
-          if (userData && userData.local && userData.local.username) {
-            const username = userData.local.username;
-            const userId = userData._id;
-
-            // Check if user is admin (lurbs)
-            if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
-              isAdmin = true;
-            } else {
-              isAdmin = false;
-            }
-
-            return username;
-          }
-        }
-      }
-    }
-  } catch (e) {
-    // Cross-origin restrictions - silently fail
-  }
-
-  // Try to get username from current window localStorage
-  try {
-    const userDataStr = localStorage.getItem('userData');
-    if (userDataStr) {
-      const userData = JSON.parse(userDataStr);
-      if (userData && userData.local && userData.local.username) {
-        const username = userData.local.username;
-        const userId = userData._id;
-
-        // Check if user is admin (lurbs)
-        if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
-          isAdmin = true;
-        } else {
-          isAdmin = false;
-        }
-
-        return username;
-      }
-    }
-  } catch (e) {
-    // Silently fail
-  }
-
-
   try {
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
