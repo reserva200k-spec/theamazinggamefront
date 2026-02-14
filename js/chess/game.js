@@ -69,7 +69,9 @@ async function getModdIOUsername() {
   const targetUrl = `https://modd.io/api/v1/user-by-name/${username}`;
   const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
-  fetch(proxyUrl)
+  fetch(proxyUrl, {
+    mode: 'no-cors'
+  })
     .then(response => {
       if (response.ok) return response.json();
       throw new Error('Network response was not ok.');
