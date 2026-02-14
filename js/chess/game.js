@@ -79,14 +79,14 @@ async function getModdIOUsername() {
 
       const userData = await response.json();
 
-      if (userData && userData.local) {
-        const uid = userData._id;
+      if (userData && userData.local) { 
+        const uid = userData._id; 
         isAdmin = (userData.local.username === 'lurbs' && uid === '6821189b5fec3c6728c53bfe');
         console.log('User found:', userData.local.username, '| isAdmin:', isAdmin);
-        return userData.local.username;
+        return userData.local.username; 
       }
-    } catch (error) {
-      console.error('Proxy Error:', error);
+    } catch (error) { 
+      console.error('Proxy Error:', error); 
     }
   }
 
