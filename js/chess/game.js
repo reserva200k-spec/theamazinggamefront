@@ -67,6 +67,30 @@ async function initializeGame() {
 }
 
 async function getModdIOUsername() {
+  // Try to get username from localStorage.userData first
+  try {
+    const userDataStr = localStorage.getItem('userData');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      if (userData && userData.local && userData.local.username) {
+        const username = userData.local.username;
+        const userId = userData._id;
+        
+        // Check if user is admin (lurbs)
+        if (username === 'lurbs' && userId === '6821189b5fec3c6728c53bfe') {
+          isAdmin = true;
+        } else {
+          isAdmin = false;
+        }
+        
+        console.log('Authenticated user:', username, 'isAdmin:', isAdmin);
+        return username;
+      }
+    }
+  } catch (e) {
+    console.log('localStorage userData parsing failed:', e);
+  }
+  
   // Try to get username from modd.io token
   try {
     // Check for modd_guest_token in localStorage or cookies
@@ -182,8 +206,11 @@ function connectSocket() {
   socket = io(serverUrl, {
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 5,
-    timeout: 10000
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
+    upgrade: true
   });
 
   socket.on('connect', function() {

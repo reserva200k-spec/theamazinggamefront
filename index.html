@@ -917,11 +917,215 @@
       transform: scale(1.1);
     }
     
-    /* Responsive */
+/* Responsive */
+    @media (max-width: 1200px) {
+      .main-content {
+        padding: 1rem;
+      }
+      
+      .home-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      
+      #chess-board {
+        width: 500px;
+        height: 500px;
+      }
+      
+      .square {
+        width: 62.5px;
+        height: 62.5px;
+        font-size: 44px;
+      }
+    }
+    
     @media (max-width: 1024px) {
       .main-content {
         flex-direction: column;
       }
+      
+      #chess-board {
+        width: 450px;
+        height: 450px;
+        margin: 0 auto;
+      }
+      
+      .square {
+        width: 56.25px;
+        height: 56.25px;
+        font-size: 40px;
+      }
+      
+      .game-sidebar {
+        max-width: 100%;
+        margin-top: 2rem;
+      }
+      
+      .home-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header {
+        padding: 1rem;
+      }
+      
+      .nav {
+        padding: 0.5rem 1rem;
+        flex-wrap: wrap;
+      }
+      
+      .main-content {
+        padding: 1rem;
+      }
+      
+      #chess-board {
+        width: 400px;
+        height: 400px;
+      }
+      
+      .square {
+        width: 50px;
+        height: 50px;
+        font-size: 36px;
+      }
+      
+      .card {
+        padding: 1rem;
+      }
+      
+      .card-title {
+        font-size: 1.2rem;
+      }
+      
+      .home-grid {
+        gap: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .bot-options {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #chess-board {
+        width: 300px;
+        height: 300px;
+      }
+      
+      .square {
+        width: 37.5px;
+        height: 37.5px;
+        font-size: 28px;
+      }
+      
+      .nav {
+        padding: 0.5rem;
+      }
+      
+      .nav-btn {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        flex: 1;
+      }
+      
+      .play-btn .btn-title {
+        font-size: 0.95rem;
+      }
+      
+      .play-btn .btn-subtitle {
+        font-size: 0.75rem;
+      }
+      
+      .bot-options {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .stat-item {
+        padding: 0.75rem 0.5rem;
+      }
+      
+      .stat-value {
+        font-size: 1.25rem;
+      }
+      
+      .stat-label {
+        font-size: 0.75rem;
+      }
+      
+      .player-bar {
+        padding: 0.75rem;
+      }
+      
+      .player-name {
+        font-size: 0.9rem;
+      }
+      
+      .player-rating {
+        font-size: 0.8rem;
+      }
+      
+      .player-time {
+        font-size: 1.25rem;
+      }
+      
+      .admin-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .admin-actions input {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+      }
+      
+      .control-btn {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+      }
+      
+      .move-history {
+        height: 200px;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      #chess-board {
+        width: 280px;
+        height: 280px;
+      }
+      
+      .square {
+        width: 35px;
+        height: 35px;
+        font-size: 24px;
+      }
+      
+      .header-logo {
+        font-size: 1.25rem;
+      }
+      
+      .nav-btn {
+        font-size: 0.8rem;
+        padding: 0.4rem;
+      }
+      
+      .card-title {
+        font-size: 1.1rem;
+      }
+    }
       
       #chess-board {
         width: 400px;
@@ -1064,7 +1268,13 @@
   <!-- Login Screen -->
   <div id="login-screen">
     <div class="login-container">
-      <div class="login-logo">♔ MODD CHESS ♚</div>
+      <div class="login-logo">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 10px;">
+        <path d="M19 22H5C3.89543 22 3 21.1046 3 20V4C3 2.89543 3.89543 2 5 2H19C20.1046 2 21 2.89543 21 4V20C21 21.1046 20.1046 22 19 22Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 16V8L12 12L16 8V16" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      MODD CHESS
+    </div>
       <div class="login-subtitle">Master the Board. Rise in Rank.</div>
       <input type="text" class="login-input" id="username-input" placeholder="Enter your username" maxlength="20">
       <button class="login-btn" onclick="login()">Enter the Arena</button>
@@ -1074,7 +1284,13 @@
   <!-- Main App -->
   <div id="app">
     <header class="header">
-      <div class="header-logo">♔ MODD CHESS</div>
+      <div class="header-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+        <path d="M19 22H5C3.89543 22 3 21.1046 3 20V4C3 2.89543 3.89543 2 5 2H19C20.1046 2 21 2.89543 21 4V20C21 21.1046 20.1046 22 19 22Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 16V8L12 12L16 8V16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      MODD CHESS
+    </div>
       <div class="header-user">
         <span class="user-rating" id="user-rating">1200</span>
         <span id="user-name">Player</span>
@@ -1099,14 +1315,22 @@
                 <div class="btn-title">Ranked Match</div>
                 <div class="btn-subtitle">Compete for rating points</div>
               </div>
-              <span class="btn-icon">🏆</span>
+              <span class="btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
             </button>
             <button class="play-btn" onclick="joinQueue('casual')">
               <div>
                 <div class="btn-title">Casual Match</div>
                 <div class="btn-subtitle">Practice without pressure</div>
               </div>
-              <span class="btn-icon">🎮</span>
+              <span class="btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 9V5L21 12L14 19V15C9 15 6 12 6 7" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
             </button>
           </div>
           
@@ -1139,7 +1363,13 @@
                 <div class="btn-title">Start Game</div>
                 <div class="btn-subtitle">Test your skills against AI</div>
               </div>
-              <span class="btn-icon">🎯</span>
+              <span class="btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 16V12" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 8H12.01" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
             </button>
           </div>
         </div>
@@ -1166,7 +1396,12 @@
           </div>
           
           <div class="card">
-            <h2 class="card-title">💬 Global Chat</h2>
+            <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 6px;">
+            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Global Chat
+        </h3>
             <div class="chat-container">
               <div class="chat-messages" id="lobby-chat-messages" style="height: 200px;"></div>
               <div class="chat-input-area">
@@ -1210,14 +1445,25 @@
         
     <div class="game-sidebar">
       <div class="card">
-        <h3>Move History</h3>
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 6px;">
+            <path d="M12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8V12L14 14" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Move History
+        </h3>
         <div class="move-history" id="move-history">
           <div class="move-list" id="move-list"></div>
         </div>
       </div>
 
       <div class="card" style="margin-top: 1rem;">
-        <h3>Chat</h3>
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 6px;">
+            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Chat
+        </h3>
         <div class="chat-container">
           <div class="chat-tabs">
             <button class="chat-tab active" onclick="switchChat('match')">Match</button>
@@ -1232,12 +1478,32 @@
       </div>
 
       <div class="game-controls">
-        <button class="control-btn" onclick="offerDraw()">🤝 Draw</button>
-        <button class="control-btn danger" onclick="resign()">🏳️ Resign</button>
+        <button class="control-btn" onclick="offerDraw()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
+            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Draw
+        </button>
+        <button class="control-btn danger" onclick="resign()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
+            <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Resign
+        </button>
       </div>
 
       <div class="card" style="margin-top: 1rem;">
-        <h3>Analysis</h3>
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 6px;">
+            <circle cx="12" cy="12" r="10" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 16V12" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 8H12.01" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Analysis
+        </h3>
         <div id="game-analysis" style="color: #888; text-align: center; padding: 2rem 0;">
           Game analysis will appear after the game ends
         </div>
@@ -1248,7 +1514,12 @@
       <!-- Leaderboard View -->
       <div id="leaderboard-view" style="display: none;">
         <div class="card" style="width: 100%;">
-          <h2 class="card-title">🏆 Global Leaderboard</h2>
+          <h2 class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Global Leaderboard
+        </h2>
           <table class="leaderboard-table">
             <thead>
               <tr>
@@ -1269,7 +1540,13 @@
       <!-- Profile View -->
       <div id="profile-view" style="display: none;">
         <div class="card" style="width: 100%;">
-          <h2 class="card-title">👤 Profile</h2>
+          <h2 class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="7" r="4" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Profile
+        </h2>
           <div id="profile-content" style="padding: 2rem 0;">
             Loading...
           </div>
@@ -1279,7 +1556,12 @@
       <!-- Admin View -->
       <div id="admin-view" style="display: none;">
         <div class="card" style="width: 100%;">
-          <h2 class="card-title">🛡️ Admin Panel</h2>
+          <h2 class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#2C3E50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Admin Panel
+        </h2>
           <div id="admin-content">
             <p>Welcome to the admin panel. Please use the navigation menu to access admin features.</p>
           </div>
