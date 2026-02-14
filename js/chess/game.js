@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', async function () {
 localStorage
 async function initializeGame() {
   const moddUsername = await getModdIOUsername();
+  console.log('Modd.io username:', moddUsername);
+  console.log('Is user window:', window.username);
+  console.log('Is user self:', self.username);
+  console.log('Is user this:', this.username);
+  console.log('Is user global:', globalThis.username);
+  
 
   const usernameInput = document.getElementById('username-input');
   if (usernameInput && moddUsername) {
