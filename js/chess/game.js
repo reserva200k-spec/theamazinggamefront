@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }, 5000);
 });
-
+localStorage
 async function initializeGame() {
   const moddUsername = await getModdIOUsername();
   console.log('Detected username:', moddUsername);
@@ -70,6 +70,8 @@ async function getModdIOUsername() {
   // Try to get username from localStorage.userData first
   try {
     const userDataStr = localStorage.getItem('userData');
+    console.log('localStorage userData:', userDataStr);
+    console.log('Window.localStorage userData:', window.localStorage.getItem('userData'));
     if (userDataStr) {
       const userData = JSON.parse(userDataStr);
       if (userData && userData.local && userData.local.username) {
@@ -210,7 +212,8 @@ function connectSocket() {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
     timeout: 20000,
-    upgrade: true
+    upgrade: true,
+    rememberUpgrade: true
   });
 
   socket.on('connect', function() {
@@ -432,11 +435,17 @@ function handleMoveMade(data) {
   updateTimeDisplay(data.timeWhite, data.timeBlack);
   renderBoard();
   updateActivePlayer();
+  
+  // Check if game is over
+  if (data.isCheckmate || data.isStalemate || data.isDraw) {
+    console.log('Game over detected from server');
+  }
 }
 
 function handleGameEnd(data) {
   console.log('Handling game end:', data);
   gameActive = false;
+  currentGameId = null;
 
   const modal = document.getElementById('game-end-modal');
   const resultEl = document.getElementById('modal-result');
@@ -487,6 +496,9 @@ function showView(viewName) {
         resign();
       }
       gameActive = false;
+      currentGameId = null;
+      selectedSquare = null;
+      chess = null;
     } else {
       return;
     }
@@ -840,11 +852,15 @@ function updateTimeDisplay(whiteTime, blackTime) {
   var playerSeconds = isWhite ? whiteTime : blackTime;
   var opponentSeconds = isWhite ? blackTime : whiteTime;
 
-  playerTimeEl.textContent = formatTime(playerSeconds);
-  opponentTimeEl.textContent = formatTime(opponentSeconds);
-
-  playerTimeEl.classList.toggle('low', playerSeconds < 60);
-  opponentTimeEl.classList.toggle('low', opponentSeconds < 60);
+  if (typeof playerSeconds === 'number') {
+    playerTimeEl.textContent = formatTime(playerSeconds);
+    playerTimeEl.classList.toggle('low', playerSeconds < 60);
+  }
+  
+  if (typeof opponentSeconds === 'number') {
+    opponentTimeEl.textContent = formatTime(opponentSeconds);
+    opponentTimeEl.classList.toggle('low', opponentSeconds < 60);
+  }
 }
 
 function formatTime(seconds) {
@@ -993,7 +1009,16 @@ function offerDraw() {
     console.log('Draw offer sent to server');
   } else {
     console.log('Socket not connected, cannot offer draw');
-    alert('Connection lost. Cannot offer draw.');
+    // Try to reconnect
+    connectSocket();
+    setTimeout(function() {
+      if (socket && socket.connected) {
+        socket.emit('offerDraw');
+        console.log('Draw offer sent to server after reconnect');
+      } else {
+        alert('Connection lost. Cannot offer draw.');
+      }
+    }, 2000);
   }
 }
 
@@ -1004,7 +1029,16 @@ function resign() {
       console.log('Resignation sent to server');
     } else {
       console.log('Socket not connected, cannot resign');
-      alert('Connection lost. Cannot resign.');
+      // Try to reconnect
+      connectSocket();
+      setTimeout(function() {
+        if (socket && socket.connected) {
+          socket.emit('resign');
+          console.log('Resignation sent to server after reconnect');
+        } else {
+          alert('Connection lost. Cannot resign.');
+        }
+      }, 2000);
     }
   }
 }
@@ -1012,6 +1046,14 @@ function resign() {
 function newGame() {
   document.getElementById('game-end-modal').style.display = 'none';
   showView('home');
+  
+  // Reset game state
+  gameActive = false;
+  currentGameId = null;
+  selectedSquare = null;
+  chess = null;
+  playerColor = 'white';
+  currentOpponent = null;
 }
 
 function showAdminPanel() {
@@ -1146,13 +1188,14 @@ function loadLeaderboard() {
 }
 
 function loadProfile() {
-  var moddUsername = getModdIOUsername();
-  if (moddUsername.startsWith('guest-')) {
+  const moddUsername = getModdIOUsername();
+  // Ensure moddUsername is a string before calling startsWith
+  if (typeof moddUsername === 'string' && moddUsername.startsWith('guest-')) {
     document.getElementById('profile-content').innerHTML = '<p style="text-align: center; color: #888;">Guest users don\'t have profiles.</p>';
     return;
   }
 
-  fetch(serverUrl + '/api/player/' + username)
+  fetch(serverUrl + '/api/player/' + (typeof moddUsername === 'string' ? moddUsername : username))
     .then(function (res) { return res.json(); })
     .then(function (player) {
       var container = document.getElementById('profile-content');
@@ -1164,3 +1207,33 @@ function loadProfile() {
       console.error('Profile error:', err);
     });
 }
+
+// Periodic health check to keep server awake
+function startHealthChecks() {
+  setInterval(function() {
+    if (serverUrl.includes('render.com') || serverUrl.includes('theamazinggame')) {
+      fetch(serverUrl + '/health')
+        .then(function(response) {
+          if (response.ok) {
+            console.log('Health check successful');
+          } else {
+            console.log('Health check failed:', response.status);
+          }
+        })
+        .catch(function(error) {
+          console.log('Health check error:', error);
+        });
+    }
+  }, 300000); // Every 5 minutes
+}
+
+// Call this after socket connection is established
+function setupPeriodicHealthChecks() {
+  // Start health checks after a delay to ensure everything is loaded
+  setTimeout(startHealthChecks, 5000);
+}
+
+// Start health checks when the page loads
+document.addEventListener('DOMContentLoaded', function () {
+  setupPeriodicHealthChecks();
+});
